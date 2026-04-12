@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote Recommender</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+</head>
+<body>
+    <div class="container">
+        <h1>💡 Quote Recommender</h1>
+        <p>Describe how you feel or what you need — get perfect quotes</p>
+
+        <div class="search-box">
+            <input type="text" id="query" placeholder="e.g. I need motivation to keep going" autocomplete="off">
+            <button onclick="getRecommendations()">Find Quotes</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
