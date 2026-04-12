@@ -1,20 +1,29 @@
 ## 💡 QuoteSense — AI-Powered Quote Recommender
 
-Built using FastAPI, Sentence Transformers, and ChromaDB for intelligent semantic quote recommendations
+Built using FastAPI, Sentence Transformers, and **Endee Vector Database** for intelligent semantic quote recommendations
+
+---
 
 ## ✨ Features
-Feature	Description
-🔍 Semantic Search	Natural language queries — understands meaning, not just keywords
-🤖 AI Recommendations	Uses Sentence Transformers to find contextually similar quotes
-📦 Vector Database	Stores embeddings efficiently using ChromaDB for fast retrieval
-⚡ Fast API Backend	Built with FastAPI for high performance and real-time responses
-🎯 Context-Aware Results	Returns quotes based on emotions, intent, and meaning
-🎨 Clean Web UI	Simple and interactive interface using HTML, CSS, and JavaScript
-📊 Similarity Score	Displays relevance score for each recommended quote
-🔄 Auto Indexing	Automatically loads and embeds quotes at startup
-🧹 Data Cleaning	Handles CSV formatting, missing values, and column normalization
-🧠 NLP-Based System	Demonstrates real-world Natural Language Processing (NLP) application
+
+| Feature                  | Description                                                           |
+| ------------------------ | --------------------------------------------------------------------- |
+| 🔍 Semantic Search       | Natural language queries — understands meaning, not just keywords     |
+| 🤖 AI Recommendations    | Uses Sentence Transformers to find contextually similar quotes        |
+| 📦 Vector Database       | Stores embeddings efficiently using **Endee DB** for fast retrieval   |
+| ⚡ Fast API Backend       | Built with FastAPI for high performance and real-time responses       |
+| 🎯 Context-Aware Results | Returns quotes based on emotions, intent, and meaning                 |
+| 🎨 Clean Web UI          | Simple and interactive interface using HTML, CSS, and JavaScript      |
+| 📊 Similarity Score      | Displays relevance score for each recommended quote                   |
+| 🔄 Auto Indexing         | Automatically loads and embeds quotes into Endee at startup           |
+| 🧹 Data Cleaning         | Handles CSV formatting, missing values, and column normalization      |
+| 🧠 NLP-Based System      | Demonstrates real-world Natural Language Processing (NLP) application |
+
+---
+
 ## 🏗️ Architecture
+
+```
 User Query (natural language)
         │
         ▼
@@ -26,10 +35,10 @@ User Query (natural language)
            │ query embedding
            ▼
 ┌──────────────────────────┐
-│     ChromaDB             │
-│  Vector Database         │
+│        Endee DB          │
+│   Vector Database        │
 │  - Stores quote vectors  │
-│  - Uses similarity search│
+│  - Uses cosine similarity│
 └──────────┬───────────────┘
            │ ranked results
            ▼
@@ -45,24 +54,42 @@ User Query (natural language)
 │ HTML + CSS + JS          │
 │ Displays quotes + score  │
 └──────────────────────────┘
+```
+
+---
+
 ## 🛠️ Tech Stack
-Component	Technology	Purpose
-Backend	FastAPI	High-performance API handling
-Embeddings	Sentence Transformers	Converts text to vectors
-Vector DB	ChromaDB	Stores and retrieves embeddings
-Frontend	HTML, CSS, JavaScript	User interface
-Data Processing	Pandas	CSV handling and preprocessing
+
+| Component       | Technology            | Purpose                         |
+| --------------- | --------------------- | ------------------------------- |
+| Backend         | FastAPI               | High-performance API handling   |
+| Embeddings      | Sentence Transformers | Converts text to vectors        |
+| Vector DB       | **Endee DB**          | Stores and retrieves embeddings |
+| Frontend        | HTML, CSS, JavaScript | User interface                  |
+| Data Processing | Pandas                | CSV handling and preprocessing  |
+
+---
+
 ## 🎯 Usage Example
 
-Query:
+**Query:**
 
+```
 "I feel sad"
+```
 
-Result:
+**Result:**
 
+```
 "Life is what happens when you're busy making other plans."
 — John Lennon (82% match)
+```
+
+---
+
 ## 📁 Project Structure
+
+```
 quote-recommender/
 ├── backend/
 │   ├── main.py
@@ -70,21 +97,30 @@ quote-recommender/
 │   ├── index.html
 │   ├── style.css
 │   ├── script.js
-│   └── vectordb/
 │
 ├── data/
 │   └── quotes.csv
 │
 ├── requirements.txt
 └── README.md
+```
+
+---
+
 ## 🚀 Key Highlights
-Uses AI + NLP instead of keyword matching
-Demonstrates real-world vector search system
-Clean separation of frontend + backend
-Scalable design using vector databases
+
+* Uses AI + NLP instead of keyword matching
+* Demonstrates real-world vector search using **Endee DB**
+* Clean separation of frontend + backend
+* Scalable design using vector databases
+
+---
+
 ## 📌 Future Improvements
-🔍 Filter by tags (motivation, life, etc.)
-🎨 Advanced UI design (cards, animations)
-🌐 Deploy as a live web app
-📱 Mobile responsiveness
-🔊 Voice-based query input
+
+* 🔍 Filter by tags (using Endee `$in` operator)
+* 📊 Range filtering (using `$range`)
+* 🎨 Advanced UI design (cards, animations)
+* 🌐 Deploy as a live web app
+* 📱 Mobile responsiveness
+* 🔊 Voice-based query input
