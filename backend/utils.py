@@ -1,84 +1,87 @@
 import os
 import pandas as pd
+import requests
 from sentence_transformers import SentenceTransformer
-import chromadb
-from chromadb.config import Settings
 
-# Get absolute paths relative to this file's location
-# Get absolute paths
+# Paths
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Go to project root
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
-
-# Correct path to CSV
 DATA_PATH = os.path.join(BASE_DIR, "data", "quotes.csv")
 
-# Vector DB stays in backend
-CHROMA_PATH = os.path.join(SCRIPT_DIR, "vectordb")
+# Endee API URL
+ENDEE_URL = "http://localhost:8080"
 
-# Create vectordb directory if it doesn't exist
-os.makedirs(CHROMA_PATH, exist_ok=True)
-
-# Load model (downloads automatically first time)
+# Load model
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Initialize ChromaDB
-client = chromadb.PersistentClient(path=CHROMA_PATH)
-collection = client.get_or_create_collection(name="quotes")
+
+def create_index():
+    url = f"{ENDEE_URL}/indexes"
+    payload = {
+        "name": "quotes_index",
+        "dimension": 384,
+        "space_type": "cosine"
+    }
+    try:
+        requests.post(url, json=payload)
+        print("✅ Index created")
+    except:
+        print("Index may already exist")
+
 
 def load_and_embed_quotes():
-    if collection.count() > 0:
-        print(f"✅ Vector DB already contains {collection.count()} quotes.")
-        return
+    create_index()
 
     print(f"Loading quotes from {DATA_PATH}...")
-    
-    if not os.path.exists(DATA_PATH):
-        print(f"❌ Error: {DATA_PATH} not found!")
-        return
-    
-    df = pd.read_csv(DATA_PATH, encoding='utf-8-sig')
 
-# Clean column names
+    df = pd.read_csv(DATA_PATH, encoding='utf-8-sig')
     df.columns = df.columns.str.strip().str.lower()
 
     documents = df['quote'].fillna("").tolist()
     metadatas = df[['author', 'tags']].fillna("").to_dict('records')
-    ids = [str(i) for i in range(len(documents))]
 
-    # Generate embeddings
     print("Generating embeddings...")
-    embeddings = model.encode(documents, show_progress_bar=True).tolist()
+    embeddings = model.encode(documents).tolist()
 
-    # Add to Chroma
-    collection.add(
-        embeddings=embeddings,
-        documents=documents,
-        metadatas=metadatas,
-        ids=ids
-    )
-    print(f"✅ Successfully added {len(documents)} quotes to vector DB.")
+    vectors = []
+    for i, (doc, meta, emb) in enumerate(zip(documents, metadatas, embeddings)):
+        vectors.append({
+            "id": str(i),
+            "vector": emb,
+            "meta": {
+                "quote": doc,
+                "author": meta['author'],
+                "tags": meta['tags']
+            }
+        })
+
+    # Upload to Endee
+    url = f"{ENDEE_URL}/indexes/quotes_index/vectors"
+    requests.post(url, json={"vectors": vectors})
+
+    print(f"✅ Added {len(vectors)} quotes to Endee")
 
 
 def search_quotes(query: str, top_k: int = 5):
     query_embedding = model.encode(query).tolist()
 
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=top_k,
-        include=["documents", "metadatas", "distances"]
-    )
+    url = f"{ENDEE_URL}/indexes/quotes_index/query"
+
+    payload = {
+        "vector": query_embedding,
+        "top_k": top_k
+    }
+
+    response = requests.post(url, json=payload)
+    results = response.json()["results"]
 
     quotes = []
-    for i in range(len(results['documents'][0])):
+    for r in results:
         quotes.append({
-            "quote": results['documents'][0][i],
-            "author": results['metadatas'][0][i]['author'],
-            "tags": results['metadatas'][0][i].get('tags', ''),
-            "similarity": round(1 / (1 + results['distances'][0][i]), 4)  # higher = better
+            "quote": r["meta"]["quote"],
+            "author": r["meta"]["author"],
+            "tags": r["meta"]["tags"],
+            "similarity": round(r["score"], 4)
         })
-    return quotes
-df = pd.read_csv(DATA_PATH)
 
-print("COLUMNS:", df.columns)
+    return quotes
