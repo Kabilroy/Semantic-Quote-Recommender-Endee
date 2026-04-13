@@ -6,14 +6,17 @@ from pydantic import BaseModel
 import os
 import sys
 
-# Add current directory to path so utils can be imported
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Fix import path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
 
-# Import utils (direct import)
 from utils import load_and_embed_quotes, search_quotes
 
-app = FastAPI(title="Quote Recommender")
+app = FastAPI(title="QuoteSense AI Recommender")
 
+# -------------------------------
+# CORS (for frontend)
+# -------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,36 +25,83 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Get absolute path to current directory
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Mount static files
+# -------------------------------
+# Static Files (CSS + JS)
+# -------------------------------
 app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
+
+# -------------------------------
+# Request Model
+# -------------------------------
 class QueryRequest(BaseModel):
     query: str
     top_k: int = 5
 
+
+# -------------------------------
+# Startup (Load data)
+# -------------------------------
 @app.on_event("startup")
 async def startup_event():
+    print("🚀 Starting QuoteSense...")
     load_and_embed_quotes()
+    print("✅ System ready")
 
-# Serve index.html at root URL
+
+# -------------------------------
+# Frontend Route
+# -------------------------------
 @app.get("/")
 async def serve_frontend():
-    index_path = os.path.join(BASE_DIR, "index.html")
-    return FileResponse(index_path)
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
 
+
+# -------------------------------
+# GET API
+# -------------------------------
 @app.get("/recommend")
 async def recommend_get(query: str = Query(..., min_length=1), top_k: int = 5):
-    results = search_quotes(query, top_k)
-    return {"query": query, "results": results}
+    try:
+        results = search_quotes(query, top_k)
+        return {
+            "status": "success",
+            "query": query,
+            "count": len(results),
+            "results": results
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "results": []
+        }
 
+
+# -------------------------------
+# POST API
+# -------------------------------
 @app.post("/recommend")
 async def recommend_post(request: QueryRequest):
-    results = search_quotes(request.query, request.top_k)
-    return {"query": request.query, "results": results}
+    try:
+        results = search_quotes(request.query, request.top_k)
+        return {
+            "status": "success",
+            "query": request.query,
+            "count": len(results),
+            "results": results
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "results": []
+        }
 
+
+# -------------------------------
+# Run Server
+# -------------------------------
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
